@@ -1,0 +1,7 @@
+/target
+/logs
+/backups
+*.zip
+*.log
+.idea
+*.iml
