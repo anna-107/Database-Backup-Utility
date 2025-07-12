@@ -40,4 +40,38 @@ public class MySQLService implements DatabaseService {
             return false;
         }
     }
+    
+    @Override
+    public boolean fullBackup() {
+        String timestamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date());
+        String backupDir = "backups";
+        new java.io.File(backupDir).mkdirs(); // create backups dir if it does not exist
+
+        String fileName = database + "_backup_" + timestamp + ".sql";
+        String filePath = backupDir + java.io.File.separator + fileName;
+
+        String cmd = String.format(
+                "mysqldump -h%s -P%d -u%s -p%s %s -r %s",
+                host, port, user, password, database, filePath
+        );
+
+        System.out.println(" Running backup: " + fileName);
+
+        try {
+            Process proc = Runtime.getRuntime().exec(cmd);
+            int exitCode = proc.waitFor();
+
+            if (exitCode == 0) {
+                System.out.println("Congrats!  Backup completed. File is at→ " + filePath);
+                return true;
+            } else {
+                System.out.println("Backup failed. Exit code: " + exitCode);
+                return false;
+            }
+        } catch (IOException | InterruptedException e) {
+            System.out.println(" Exception during backup: " + e.getMessage());
+            return false;
+        }
+    }
+
 }
