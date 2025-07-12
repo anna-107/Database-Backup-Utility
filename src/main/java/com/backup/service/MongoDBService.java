@@ -1,9 +1,10 @@
 package com.backup.service;
 
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoDatabase;
 import java.util.Scanner;
+
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
 
 public class MongoDBService implements DatabaseService {
 
@@ -13,7 +14,7 @@ public class MongoDBService implements DatabaseService {
     private  int port;
     private  String user;
     private  String password;
-    private  String database;
+    private  boolean isCloud;
 
 
     public MongoDBService() {
@@ -23,41 +24,44 @@ public class MongoDBService implements DatabaseService {
                  Press 0 for Locally hosted and 1 for cloud hosted:
                 \s""");
         int hostedWhere = Integer.parseInt(scanner.nextLine().trim());
-        switch (hostedWhere) {
-            case 1: {
+        if(hostedWhere==1){
+                isCloud=true;
                 System.out.print("Enter uri: ");
                 this.url = scanner.nextLine().trim();
                 System.out.print("Enter DataBase Name: ");
                 this.databaseName = scanner.nextLine().trim();
             }
-            case 0: {
+            else if( hostedWhere==0){
+                isCloud=false;
                 System.out.print("Enter Host: ");
                 this.host = scanner.nextLine().trim();
                 System.out.print("Enter Port: ");
                 this.port = Integer.parseInt(scanner.nextLine().trim());
-                ;
                 System.out.print("Enter Username: ");
                 this.user = scanner.nextLine().trim();
                 System.out.print("Enter Password: ");
                 this.password = scanner.nextLine().trim();
                 System.out.print("Enter Database Name: ");
-                this.database = scanner.nextLine().trim();
+                this.databaseName = scanner.nextLine().trim();
             }
-            default: {
+            else{
                 System.out.println("Invalid Selection!! Aborting!");
-                return;
+                throw  new IllegalArgumentException("Invalid selection");
             }
         }
-    }
+    
 
 
     @Override
     public boolean testConnection() {
-        String uri= "mongodb://"+user+":"+password+"@"+host+":"+port+"/";
+        String Connectionuri;
+        if (isCloud){
+            Connectionuri= url;
+        }else{
 
-
-
-        try (MongoClient client = MongoClients.create(url)) {
+        Connectionuri= "mongodb://"+user+":"+password+"@"+host+":"+port+"/";
+        }
+        try (MongoClient client = MongoClients.create(Connectionuri)) {
             MongoDatabase db = client.getDatabase(databaseName);
             db.listCollectionNames().first();          // lightweight ping
             System.out.println(" MongoDB connection established.");
