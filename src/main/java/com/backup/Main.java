@@ -42,6 +42,7 @@ public class Main {
         boolean ok = service.testConnection();
         if (ok) {
             System.out.println("\n Connection test succeeded.");
+            service.fullBackup();
         } else {
             System.out.println("\n Connection test failed. Fix credentials/network and retry.");
         }
