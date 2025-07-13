@@ -65,7 +65,7 @@ public class MongoDBService implements DatabaseService {
         }
         try (MongoClient client = MongoClients.create(Connectionuri)) {
             MongoDatabase db = client.getDatabase(databaseName);
-            db.listCollectionNames().first();          // lightweight ping
+            db.listCollectionNames().first();          // checking connection
             Document ping = new Document("ping", 1);
             Document result = db.runCommand(ping);
             System.out.println("Ping result: " + result.toJson());
