@@ -4,9 +4,9 @@ public interface DatabaseService {
 
     boolean testConnection();
 
-   // boolean fullBackup();
+    boolean fullBackup();
 
-  //  boolean restore(String backupPath);
+    boolean fullRestore(String path);
 
     // later: incrementalBackup(), diffBackup(), etc.
 }
