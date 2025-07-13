@@ -1,9 +1,10 @@
 package com.backup.service;
 
-import java.util.Scanner;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Scanner;
 
 public class MySQLService implements DatabaseService {
 
@@ -40,12 +41,11 @@ public class MySQLService implements DatabaseService {
             return false;
         }
     }
-    
     @Override
     public boolean fullBackup() {
         String timestamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date());
         String backupDir = "backups";
-        new java.io.File(backupDir).mkdirs(); // create backups dir if it does not exist
+        new java.io.File(backupDir).mkdirs();
 
         String fileName = database + "_backup_" + timestamp + ".sql";
         String filePath = backupDir + java.io.File.separator + fileName;
@@ -62,16 +62,41 @@ public class MySQLService implements DatabaseService {
             int exitCode = proc.waitFor();
 
             if (exitCode == 0) {
-                System.out.println("Congrats!  Backup completed. File is at→ " + filePath);
+                System.out.println("Backup completed → " + filePath);
                 return true;
             } else {
-                System.out.println("Backup failed. Exit code: " + exitCode);
+                System.out.println(" Backup failed. Exit code: " + exitCode);
                 return false;
             }
         } catch (IOException | InterruptedException e) {
-            System.out.println(" Exception during backup: " + e.getMessage());
+            System.out.println("Exception during backup: " + e.getMessage());
             return false;
         }
     }
+    @Override
+    public boolean fullRestore(String path) {
+            System.out.println(" Restoring MySQL database from: " + path);
+            String cmd = "mysql -u " + user + " -p" + password + " " + database + " < " + path;
+            try {
+                String[] fullCmd = {"/bin/sh", "-c", cmd};
+                Process proc = Runtime.getRuntime().exec(fullCmd);
+                int exitCode = proc.waitFor();
 
-}
+                if (exitCode == 0) {
+                    System.out.println("MySQL restore completed.");
+                    return true;
+                } else {
+                    System.out.println("Restore failed. Exit code: " + exitCode);
+                    return false;
+                }
+            } catch (IOException | InterruptedException e) {
+                System.out.println("Exception during MySQL restore: " + e.getMessage());
+                return false;
+            }
+        }
+
+
+    }
+
+
+
