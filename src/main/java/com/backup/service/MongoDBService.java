@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
 
+import com.backup.FileUtils;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
@@ -65,7 +66,7 @@ public class MongoDBService implements DatabaseService {
         }
         try (MongoClient client = MongoClients.create(Connectionuri)) {
             MongoDatabase db = client.getDatabase(databaseName);
-            db.listCollectionNames().first();          // checking connection
+            db.listCollectionNames().first();          // lightweight ping
             Document ping = new Document("ping", 1);
             Document result = db.runCommand(ping);
             System.out.println("Ping result: " + result.toJson());
@@ -79,13 +80,10 @@ public class MongoDBService implements DatabaseService {
 
     @Override
     public boolean fullBackup() {
-            String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-            String backupDir  = "backups";
-            new File(backupDir).mkdirs();
+        String backupDir = FileUtils.createTimestampFolder("mongodb", databaseName);
 
-            // mongodump writes into a directory; we’ll name it database_timestamp
-            String dumpFolder = backupDir + File.separator + databaseName + "_dump_" + timestamp;
-
+        // mongodump writes into a directory; we’ll name it database_timestamp
+        String dumpFolder = backupDir + File.separator + "dump";
             String cmd = String.format(
                     "mongodump --db %s --username %s --password %s --authenticationDatabase admin --out %s",
                     databaseName, user, password, dumpFolder
@@ -99,6 +97,11 @@ public class MongoDBService implements DatabaseService {
 
                 if (exitCode == 0) {
                     System.out.println("MongoDB backup completed → " + dumpFolder);
+                    String zipPath = backupDir + ".zip";
+                    if (FileUtils.zipDirectory(backupDir, zipPath)) {
+                        System.out.println("Backup zipped → " + zipPath);
+                        FileUtils.log("MongoDB backup successful → " + zipPath);
+                    }
                     return true;
                 } else {
                     System.out.println("mongodump failed. Exit code: " + exitCode);
