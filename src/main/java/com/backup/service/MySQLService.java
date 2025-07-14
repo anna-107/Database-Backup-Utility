@@ -1,9 +1,13 @@
 package com.backup.service;
 
+import com.backup.FileUtils;
+
+import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class MySQLService implements DatabaseService {
@@ -43,19 +47,14 @@ public class MySQLService implements DatabaseService {
     }
     @Override
     public boolean fullBackup() {
-        String timestamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date());
-        String backupDir = "backups";
-        new java.io.File(backupDir).mkdirs();
-
-        String fileName = database + "_backup_" + timestamp + ".sql";
-        String filePath = backupDir + java.io.File.separator + fileName;
-
+        String backupDir = FileUtils.createTimestampFolder("mysql", database);
+        String filePath = backupDir + File.separator + database + ".sql";
         String cmd = String.format(
                 "mysqldump -h%s -P%d -u%s -p%s %s -r %s",
                 host, port, user, password, database, filePath
         );
 
-        System.out.println(" Running backup: " + fileName);
+        System.out.println(" Running backup: " + filePath);
 
         try {
             Process proc = Runtime.getRuntime().exec(cmd);
@@ -63,9 +62,15 @@ public class MySQLService implements DatabaseService {
 
             if (exitCode == 0) {
                 System.out.println("Backup completed → " + filePath);
+                String zipPath = backupDir + ".zip";
+                if (FileUtils.zipDirectory(backupDir, zipPath)) {
+                    System.out.println("Backup zipped → " + zipPath);
+                    FileUtils.log("MySQL backup and compression successful → " + zipPath);
+                }
+
                 return true;
             } else {
-                System.out.println(" Backup failed. Exit code: " + exitCode);
+                System.out.println("Backup failed. Exit code: " + exitCode);
                 return false;
             }
         } catch (IOException | InterruptedException e) {
