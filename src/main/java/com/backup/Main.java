@@ -1,11 +1,15 @@
 package com.backup;
 
 import com.backup.service.*;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("===== DATABASE BACKUP UTILITY========");
@@ -13,9 +17,10 @@ public class Main {
         System.out.println("Press 1 to start");
         System.out.println("Press 0 or type --help for assistance");
 
+
         String choice = scanner.nextLine().trim();
         if (choice.equals("0") || choice.equalsIgnoreCase("--help")) {
-            showHelp();
+            CLIHandler.showHelp();
             return;
         }
         if (!choice.equals("1")) {
@@ -38,7 +43,7 @@ public class Main {
             System.out.println("Unsupported DB type.");
             return;
         }
-        System.out.println("\n🔍 Testing connection...\n");
+        System.out.println("\nTesting connection...\n");
 
         boolean ok = service.testConnection();
         if (ok) {
@@ -47,11 +52,53 @@ public class Main {
                     "Press 1 for backup, press 0 for restore!");
             int choice2= Integer.parseInt(scanner.nextLine().trim());
             if(choice2==1){
-            service.fullBackup();}
+                System.out.println("1 : Full Backup");
+                System.out.println("2 : Incremental Backup");
+                int mysqlChoice = Integer.parseInt(scanner.nextLine());
+                if (mysqlChoice == 1) {
+                    System.out.println("Full Backup proceeding...");
+                      service.fullBackup();
+                    } else if (mysqlChoice == 2) {
+                        if(dbType.equals("mysql")){
+                        System.out.println("Incremental backup via bin-logs selected.");
+                        service.IncrementalBackup();
+
+                    } else{
+                            System.out.println("Incremental backup via MongoDB CDC initiating...");
+                            service.IncrementalBackup();
+                        }
+                }
+
+            }
             else{
-                System.out.println("Enter the path of your backup file: ");
-                String path=scanner.nextLine().trim();
-                service.fullRestore(path);
+               System.out.print("Enter full path to the backup folder/file: ");
+                String restorePath = scanner.nextLine().trim();
+
+                System.out.print("Do you want selective restore? (y/n): ");
+                String isSelective = scanner.nextLine().trim().toLowerCase();
+
+                if (isSelective.equals("y")) {
+                    System.out.print("Enter comma-separated collection names to restore: ");
+                    String colInput = scanner.nextLine().trim();
+                    List<String> collections = Arrays.asList(colInput.split(","));
+
+                    boolean ok1 = service.selectiveRestore(restorePath, collections);
+                    System.out.println(ok1 ? "Selective restore complete." : "Restore had issues.");
+                } else {
+                    boolean ok1 = service.fullRestore(restorePath);
+                    System.out.println(ok1 ? "Full restore complete." : "Restore failed.");
+                    if(ok1){
+                        System.out.println("Do you want Incremental Restore? (y/n): ");
+                        String choice1 = scanner.nextLine();
+                        if(choice1.equals("y")){
+                            service.IncrementalRestore();
+                        }
+                        else{
+                            System.out.println("Backup Complete! Aborting...");
+                        }
+                    }
+                }
+
             }
 
         } else {

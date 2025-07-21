@@ -1,6 +1,9 @@
 package com.backup;
 
 import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
@@ -71,4 +74,29 @@ public class FileUtils {
             System.out.println("Could not write to log: " + e.getMessage());
         }
     }
+
+    public static void sendNotification(String topic, String message) {
+        try {
+            URL url = new URL("https://ntfy.sh/" + topic);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setDoOutput(true);
+            byte[] out = message.getBytes(StandardCharsets.UTF_8);
+            conn.setFixedLengthStreamingMode(out.length);
+            conn.setRequestProperty("Content-Type", "text/plain; charset=UTF-8");
+            conn.connect();
+            try (OutputStream os = conn.getOutputStream()) {
+                os.write(out);
+            }
+            if (conn.getResponseCode() != 200) {
+                System.err.println("ntfy.sh notification failed: " + conn.getResponseCode());
+            }
+        } catch (Exception e) {
+            System.err.println("ntfy.sh notification error: " + e.getMessage());
+        }
+    }
+
+
+
+
 }
