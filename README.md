@@ -33,14 +33,17 @@ A CLI-based utility for **full**, **incremental**, and **selective** backup and 
 
 ## USAGE INSTRUCTIONS
 
-### COMPILE THE PROJECT
-
-```bash
-mvn clean package
-```
 ### RUN THE UTILITY
+To run the utility follow the following steps:
+- Clone the project in to your system (NOTE: git must be installed in your system).
+- Open the cloned project and open terminal there.
+- Now allow the bash file to be executable by running.
 ```bash
-java -jar target/database-backup-utility.jar
+sudo chmod +x start-utility.sh
+```
+- Then execute the bash script by running.
+``` bash
+./start-utility.sh
 ```
 
 ### LOGGING 
